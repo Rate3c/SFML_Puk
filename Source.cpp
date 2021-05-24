@@ -5,6 +5,11 @@
 ѕользователь с помощью курсора выбирает нужную точку экрана и нажимает ЂEnterї или левую кнопку мыши, 
 фиксиру€ координату (0,0) начала рисунка в декартовой системе координат. ƒл€ задани€ очередного стежка курсор перемещаетс€ в другую точку, но не дальше,
 чем на максимальную длину стежка, и т. д., образу€ узор вышивки. ќкончание ввода рисунка производитс€ по нажатию клавиши ЂEscї.
+_________________________________________________________
+
+BackSpace - delete previous stitch
+Esc - exit
+LeftMouseClick - new stitch
 */
 
 #include <SFML/Graphics.hpp>
@@ -23,11 +28,13 @@ vector<double> Xcords; //вектор х координат
 vector<double> Ycords; //вектор у координат
 vector<double> Lenghts = { 0 }; //длины стежков
 
+//проверка, не пустой ли файл(конфиг)
 bool Is_empty(std::ifstream& pFile) {
     return pFile.peek() == std::ifstream::traits_type::eof();
 }
 
-void Exit(vector <double> Xcords, vector <double> Ycords) {
+//выход из программы
+void Exit(vector <double>& Xcords, vector <double>& Ycords) {
     cout << endl;
     for (int i = 0; i < Xcords.size(); i++)
     {
@@ -71,16 +78,36 @@ void DrawLine(int x, int y, double lengh, double ugol) {
     lines.push_back(myline);
 }
 
-void DrawText(unsigned int shirina/*, int offset*/) {
+//отображение информации по смещению и длине последнего стежка на экране
+void DrawText(unsigned int shirina, RenderWindow &window1) {
+    Vector2i position = Mouse::getPosition(window1);
+
+    ostringstream offsetDX; //offset by dx
+    ostringstream offsetDY; //offset by dy
+    ostringstream laststitch; // lenght of the last stitch
+
+    offsetDX << abs(position.x - Xcords[Xcords.size() - 1]);
+    offsetDY << abs(position.y - Ycords[Ycords.size() - 1]);
+    laststitch << (int)Lenghts[Lenghts.size() - 1];
+
     sf::Text dxdy;
     sf::Font font;
     font.loadFromFile("arial.ttf");
     dxdy.setFont(font);
-    dxdy.setString("Offset by dx = 123");
-    dxdy.setCharacterSize(20);
+    dxdy.setString("OFFSET BY dx = " + offsetDX.str() + "\n" + "OFFSET by dy = " + offsetDY.str() + "\n" + "Lenght of the last stitch = " + laststitch.str());
+    dxdy.setCharacterSize(17);
     dxdy.setFillColor(sf::Color::White);
     dxdy.setStyle(sf::Text::Bold);
-    dxdy.move(shirina - 250, 0);
+    dxdy.move(shirina - 300, 0);
+    window1.draw(dxdy);
+}
+
+void DeletePrevious(RenderWindow &window1, vector<double>& Xcords1, vector<double>& Ycords1, vector<double>& Lenghts1, vector<sf::Shape*>& stezhok1, vector<sf::Shape*>& lines) {
+    stezhok1.erase(stezhok1.end() - 1);
+    lines.erase(lines.end() - 1);
+    Xcords1.erase(Xcords1.end() - 1);
+    Ycords1.erase(Ycords1.end() - 1);
+    Lenghts1.erase(Lenghts1.end() - 1);
 }
 
 int main()
@@ -90,7 +117,7 @@ int main()
     int firsttap = 0;
     double degree = 180.0 / 3.141592;
     RenderWindow window(VideoMode(1600, 900), "SFML2.0");
-    window.setFramerateLimit(30);
+    window.setFramerateLimit(15);
     sf::Vector2u size = window.getSize();
     unsigned int width = size.x;
     unsigned int height = size.y;
@@ -146,6 +173,7 @@ int main()
             else cout << "Config is empty." << endl;
         }
         incfg.close();
+        choice = 0;
     }
 
     // главный цикл
@@ -174,7 +202,6 @@ int main()
                 }
                 // отрисовка линий 
                 else {
-
                     Xcords.push_back(event.mouseButton.x);
                     Ycords.push_back(event.mouseButton.y);
                     firsttap++;
@@ -205,42 +232,12 @@ int main()
         }
 
         //backspace чтобы удалить линию
-        if ((sf::Keyboard::isKeyPressed(sf::Keyboard::BackSpace))&&(lines.size()>0))
-        {
-            stezhok.erase(stezhok.end() - 1);
-            lines.erase(lines.end()-1);
-            Xcords.erase(Xcords.end()-1);
-            Ycords.erase(Ycords.end()-1);
-            Lenghts.erase(Lenghts.end()-1);
-            window.display();
+        if ((sf::Keyboard::isKeyPressed(sf::Keyboard::BackSpace)) && (lines.size() > 0)){
+            DeletePrevious(window, Xcords, Ycords, Lenghts, stezhok, lines);
             firsttap--;
         }
 
         window.clear();
-
-        if (Xcords.size() > 0) {
-            Vector2i position = Mouse::getPosition(window);
-
-            ostringstream offsetDX; //offset by dx
-            ostringstream offsetDY; //offset by dy
-            ostringstream laststitch; // lenght of the last stitch
-
-            offsetDX << abs(position.x - Xcords[Xcords.size() - 1]);
-            offsetDY << abs(position.y - Ycords[Ycords.size() - 1]);
-            laststitch << (int)Lenghts[Lenghts.size() - 1];
-
-            sf::Text dxdy;
-            sf::Font font;
-            font.loadFromFile("arial.ttf");
-            dxdy.setFont(font);
-            dxdy.setString("OFFSET BY dx = " + offsetDX.str() + "\n" + "OFFSET by dy = " + offsetDY.str() + "\n" + "Lenght of the last stitch = " + laststitch.str());
-            dxdy.setCharacterSize(17);
-            dxdy.setFillColor(sf::Color::White);
-            dxdy.setStyle(sf::Text::Bold);
-            dxdy.move(width - 300, 0);
-            window.draw(dxdy);
-        }
-
 
         for (auto it1 = stezhok.begin(); it1 != stezhok.end(); it1++)
         {
@@ -250,6 +247,10 @@ int main()
         for (auto it = lines.begin(); it != lines.end(); it++)
         {
             window.draw(**it);
+        }
+
+        if (Xcords.size() > 0) {
+            DrawText(width, window);
         }
 
         window.display();
