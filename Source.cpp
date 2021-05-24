@@ -12,6 +12,8 @@ Esc - exit
 LeftMouseClick - new stitch
 */
 
+#pragma execution_character_set("utf-8")
+
 #include <SFML/Graphics.hpp>
 #include <vector>
 #include <math.h>
