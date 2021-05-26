@@ -32,19 +32,41 @@ vector<double> Xcords; //вектор х координат
 vector<double> Ycords; //вектор у координат
 vector<double> Lenghts = { 0 }; //длины стежков
 
+vector <Shape*> marks2;
+vector <Shape*> marks1;
+
+void Markings(unsigned int x, unsigned int y) {
+    for (int i = 40; i < x;)
+    {
+        RectangleShape myline1(Vector2f(x, 1.f));
+        myline1.rotate(180.f);
+        myline1.setFillColor(Color(125, 125, 125, 125));
+        myline1.move(i, 0);
+    }
+    for (int j = 40; j < y;)
+    {
+        RectangleShape myline2(Vector2f(x, 1.f));
+        myline2.rotate(-90.f);
+        myline2.setFillColor(Color(125, 125, 125, 125));
+        myline2.move(0, j);
+    }
+}
+
 //проверка, не пустой ли файл(конфиг)
 bool Is_empty(std::ifstream& pFile) {
     return pFile.peek() == std::ifstream::traits_type::eof();
 }
 
 //выход из программы
-void Exit(vector <double>& Xcords, vector <double>& Ycords) {
+void Exit(vector <double>& Xcords, vector <double>& Ycords, RenderWindow &window1) {
     cout << endl;
     for (int i = 0; i < Xcords.size(); i++)
     {
         cout << Xcords[i] << " " << Ycords[i] << " ; ";
         cout << "Lenght of stitch " << i << " is " << (int)Lenghts[i] << " mm" << endl;
     }
+
+    window1.close();
 
     cout << endl << "Do you want to save coordinates in config? Press \"1\" for YES or \"2\" for NO. ";
     int action;
@@ -66,9 +88,9 @@ void Exit(vector <double>& Xcords, vector <double>& Ycords) {
 //окружность для нагдлялной длины стежка
 CircleShape StezhokLenght(int x, int y, double lengh, RenderWindow &window1) {
     CircleShape stezh(lengh); 
-    stezh.setFillColor(Color::White);
+    //stezh.setFillColor(Color::White);
     stezh.setOutlineThickness(1);
-    stezh.setOutlineColor(sf::Color(0, 0, 0, 35));
+    stezh.setOutlineColor(sf::Color(0, 0, 0, 45));
     stezh.move(x - lengh, y - lengh);
     window1.draw(stezh);
     return stezh;
@@ -107,6 +129,7 @@ void DrawText(unsigned int shirina, RenderWindow &window1) {
     window1.draw(dxdy);
 }
 
+//delete previous line
 void DeletePrevious(RenderWindow &window1, vector<double>& Xcords1, vector<double>& Ycords1, vector<double>& Lenghts1, vector<sf::Shape*>& stezhok1, vector<sf::Shape*>& lines) {
     //stezhok1.erase(stezhok1.end() - 1);
     lines.erase(lines.end() - 1);
@@ -115,6 +138,7 @@ void DeletePrevious(RenderWindow &window1, vector<double>& Xcords1, vector<doubl
     Lenghts1.erase(Lenghts1.end() - 1);
 }
 
+//line's color
 Color LineColor(Color color1) {
     cout << "   What color would you like to see your lines?" << endl
         << "\t" << "1.Gray" << endl
@@ -214,6 +238,25 @@ int main()
         choice = 0;
     }
 
+    for (int i = 30; i < width;)
+    {
+        RectangleShape* myline1 = new RectangleShape(Vector2f(height, 1.f));
+        myline1->rotate(90.f);
+        myline1->setFillColor(Color(125, 125, 125, 150));
+        myline1->move(i, 0);
+        marks1.push_back(myline1);
+        i = i + 30;
+    }
+    for (int j = 30; j < height;)
+    {
+        RectangleShape* myline2 = new RectangleShape(Vector2f(width, 1.f));
+        myline2->setFillColor(Color(125, 125, 125, 150));
+        myline2->move(0, j);
+        marks2.push_back(myline2);
+        j = j + 30;
+    }
+
+
     // главный цикл
     while (window.isOpen())
     {
@@ -224,7 +267,7 @@ int main()
             {
             case sf::Event::Closed:
             {
-                window.close();
+                Exit(Xcords, Ycords, window);
                 return 0;
             }
             //регистрация нажатия
@@ -286,11 +329,20 @@ int main()
             assistFlag = false;
         }
 
-        window.clear(Color::White);
+        window.clear(Color(240, 240, 240, 255));
 
         //вспомогательная окружность включается, когда поднят флаг(нажата клавиша LAlt)
         if ((firsttap > 0) && (assistFlag == true)) {
             window.draw(StezhokLenght(Xcords[firsttap - 1], Ycords[firsttap - 1], stezhokL, window));
+        }
+
+        for (auto it3 = marks1.begin(); it3 != marks1.end(); it3++)
+        {
+            window.draw(**it3);
+        }
+        for (auto it4 = marks2.begin(); it4 != marks2.end(); it4++)
+        {
+            window.draw(**it4);
         }
 
         for (auto it = lines.begin(); it != lines.end(); it++)
@@ -316,7 +368,7 @@ int main()
 
         //при нажатии Escape выход из программы
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::Escape)) {
-            Exit(Xcords, Ycords); return 0;
+            Exit(Xcords, Ycords, window); return 0;
         }
     }
     return 0;
