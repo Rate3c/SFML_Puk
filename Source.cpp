@@ -10,6 +10,7 @@ _________________________________________________________
 BackSpace - delete previous stitch
 Esc - exit
 LeftMouseClick - new stitch
+LAlt - drawwing assistant
 */
 
 #pragma execution_character_set("utf-8")
@@ -20,6 +21,7 @@ LeftMouseClick - new stitch
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <locale>
 
 using namespace sf;
 using namespace std;
@@ -62,20 +64,21 @@ void Exit(vector <double>& Xcords, vector <double>& Ycords) {
 }
 
 //окружность для нагдлялной длины стежка
-void StezhokLenght(int x, int y, double lengh) {
-    CircleShape* stezh = new CircleShape(lengh); 
-    stezh->setFillColor(Color(0, 0, 0));
-    stezh->setOutlineThickness(1);
-    stezh->setOutlineColor(sf::Color(255, 255, 255, 20));
-    stezh->move(x - lengh, y - lengh);
-    stezhok.push_back(stezh);
+CircleShape StezhokLenght(int x, int y, double lengh, RenderWindow &window1) {
+    CircleShape stezh(lengh); 
+    stezh.setFillColor(Color::White);
+    stezh.setOutlineThickness(1);
+    stezh.setOutlineColor(sf::Color(0, 0, 0, 35));
+    stezh.move(x - lengh, y - lengh);
+    window1.draw(stezh);
+    return stezh;
 }
 
 // нарисовать линию(стежок)
-void DrawLine(int x, int y, double lengh, double ugol) {
-    RectangleShape* myline = new RectangleShape(Vector2f(lengh, 1.f));
+void DrawLine(int x, int y, double lengh, double ugol, Color color1) {
+    RectangleShape* myline = new RectangleShape(Vector2f(lengh, 2.f));
     myline->rotate(ugol);
-    myline->setFillColor(Color(15, 180, 140));
+    myline->setFillColor(color1);
     myline->move(x, y);
     lines.push_back(myline);
 }
@@ -94,48 +97,80 @@ void DrawText(unsigned int shirina, RenderWindow &window1) {
 
     sf::Text dxdy;
     sf::Font font;
-    font.loadFromFile("arial.ttf");
+    font.loadFromFile("ebrima.ttf");
     dxdy.setFont(font);
-    dxdy.setString("OFFSET BY dx = " + offsetDX.str() + "\n" + "OFFSET by dy = " + offsetDY.str() + "\n" + "Lenght of the last stitch = " + laststitch.str());
+    dxdy.setString("OFFSET BY dx = " + offsetDX.str() + "\n" + "OFFSET by dy = " + offsetDY.str() + "\n" + "Last stitch's lenght = " + laststitch.str());
     dxdy.setCharacterSize(17);
-    dxdy.setFillColor(sf::Color::White);
+    dxdy.setFillColor(sf::Color::Black);
     dxdy.setStyle(sf::Text::Bold);
     dxdy.move(shirina - 300, 0);
     window1.draw(dxdy);
 }
 
 void DeletePrevious(RenderWindow &window1, vector<double>& Xcords1, vector<double>& Ycords1, vector<double>& Lenghts1, vector<sf::Shape*>& stezhok1, vector<sf::Shape*>& lines) {
-    stezhok1.erase(stezhok1.end() - 1);
+    //stezhok1.erase(stezhok1.end() - 1);
     lines.erase(lines.end() - 1);
     Xcords1.erase(Xcords1.end() - 1);
     Ycords1.erase(Ycords1.end() - 1);
     Lenghts1.erase(Lenghts1.end() - 1);
 }
 
+Color LineColor(Color color1) {
+    cout << "   What color would you like to see your lines?" << endl
+        << "\t" << "1.Gray" << endl
+        << "\t" << "2.Black" << endl
+        << "\t" << "3.Green" << endl
+        << "\t" << "4.Blue" << endl
+        << "\t" << "5.Red" << endl
+        << "\t" << "6.Yellow" << endl
+        << "\t" << "7.Cyan" << endl
+        << "   Your choice: ";
+    int x;
+    cin >> x;
+    cout << endl;
+    switch (x)
+    {
+    case 1: color1 = Color(128, 128, 128); break;
+    case 2: color1 = Color::Black; break;
+    case 3: color1 = Color::Green; break;
+    case 4: color1 = Color::Blue; break;
+    case 5: color1 = Color::Red; break;
+    case 6: color1 = Color::Yellow; break;
+    case 7: color1 = Color::Cyan; break;
+    default: color1 = Color::Black; break;
+    }
+    return color1;
+}
+
 int main()
 {
+    setlocale(LC_ALL, "");
+    Color linescolor;
+    bool assistFlag = false;
     double alpha;
     int stezhokL = 200;
     int firsttap = 0;
     double degree = 180.0 / 3.141592;
     RenderWindow window(VideoMode(1600, 900), "SFML2.0");
-    window.setFramerateLimit(15);
+    window.setFramerateLimit(10);
     sf::Vector2u size = window.getSize();
     unsigned int width = size.x;
     unsigned int height = size.y;
 
+    linescolor = LineColor(linescolor);
+
     int choice;
-    cout << "Would you like to use your config(1) or draw new(2)? ";
+    cout << "   Would you like to use your config(1) or draw new(2)? ";
     cin >> choice;
     if (choice == 1) {
         string cfg = "config.txt";
         ifstream incfg;
         incfg.open(cfg);
         if (!incfg.is_open()) {
-            cout << "Openning file error." << endl;
+            cout << "   Openning file error." << endl;
         }
         else {
-            cout << "Config opened." << endl;
+            cout << "   Config opened." << endl;
             int I;
 
             if (!Is_empty(incfg)) {
@@ -155,7 +190,8 @@ int main()
 
                 for (firsttap; firsttap < Xcords.size(); firsttap++) {
 
-                    StezhokLenght(Xcords[firsttap], Ycords[firsttap], stezhokL);
+                    StezhokLenght(Xcords[firsttap], Ycords[firsttap], stezhokL, window);
+
                     if (firsttap != 0) {
                         double lenght = sqrt(pow(Xcords[firsttap] - Xcords[firsttap - 1], 2) + pow(Ycords[firsttap] - Ycords[firsttap - 1], 2));
 
@@ -168,11 +204,11 @@ int main()
 
                         Lenghts.push_back(lenght);
 
-                        DrawLine(Xcords[firsttap], Ycords[firsttap], lenght, alpha);
+                        DrawLine(Xcords[firsttap], Ycords[firsttap], lenght, alpha, linescolor);
                     }
                 }
             }
-            else cout << "Config is empty." << endl;
+            else cout << "   Config is empty." << endl;
         }
         incfg.close();
         choice = 0;
@@ -200,7 +236,8 @@ int main()
                     Ycords.push_back(position.y);
                     firsttap++;
 
-                    StezhokLenght(event.mouseButton.x, event.mouseButton.y, stezhokL);
+                    StezhokLenght(event.mouseButton.x, event.mouseButton.y, stezhokL, window);
+
                 }
                 // отрисовка линий 
                 else {
@@ -210,7 +247,9 @@ int main()
                     double lenght = sqrt(pow(Xcords[firsttap - 1] - Xcords[firsttap - 2], 2) + pow(Ycords[firsttap - 1] - Ycords[firsttap - 2], 2)); // длина линии
                     // вычисление угла поворота линии 
                     if (lenght <= stezhokL) {
-                        StezhokLenght(event.mouseButton.x, event.mouseButton.y, stezhokL); // окружность для наглядности
+
+                        StezhokLenght(event.mouseButton.x, event.mouseButton.y, stezhokL, window); // окружность для наглядности
+
                         Lenghts.push_back(lenght);
 
                         if (Xcords[firsttap - 1] - Xcords[firsttap - 2] < 0) {
@@ -220,10 +259,10 @@ int main()
                             alpha = 180 + atan((Ycords[firsttap - 1] - Ycords[firsttap - 2]) / (Xcords[firsttap - 1] - Xcords[firsttap - 2])) * degree;
                         }
 
-                        DrawLine(event.mouseButton.x, event.mouseButton.y, lenght, alpha);
+                        DrawLine(event.mouseButton.x, event.mouseButton.y, lenght, alpha, linescolor);
                     }
                     else {
-                        cout << "Wrong stitch lenght!" << endl;
+                        cout << "   Wrong stitch lenght!" << endl;
                         Xcords.erase(Xcords.end() - 1);
                         Ycords.erase(Ycords.end() - 1);
                         firsttap--;
@@ -234,16 +273,24 @@ int main()
         }
 
         //backspace чтобы удалить линию
-        if ((sf::Keyboard::isKeyPressed(sf::Keyboard::BackSpace)) && (lines.size() > 0)){
+        if ((sf::Keyboard::isKeyPressed(sf::Keyboard::BackSpace)) && (lines.size() > 0)) {
             DeletePrevious(window, Xcords, Ycords, Lenghts, stezhok, lines);
             firsttap--;
         }
 
-        window.clear();
+        //включение и выключение флага для вспомогательной окружности
+        if ((assistFlag == false) && Keyboard::isKeyPressed(Keyboard::LAlt)) {
+            assistFlag = true;
+        }
+        else if ((assistFlag == true) && Keyboard::isKeyPressed(Keyboard::LAlt)) {
+            assistFlag = false;
+        }
 
-        for (auto it1 = stezhok.begin(); it1 != stezhok.end(); it1++)
-        {
-            window.draw(**it1);
+        window.clear(Color::White);
+
+        //вспомогательная окружность включается, когда поднят флаг(нажата клавиша LAlt)
+        if ((firsttap > 0) && (assistFlag == true)) {
+            window.draw(StezhokLenght(Xcords[firsttap - 1], Ycords[firsttap - 1], stezhokL, window));
         }
 
         for (auto it = lines.begin(); it != lines.end(); it++)
