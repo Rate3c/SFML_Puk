@@ -254,22 +254,22 @@ int main()
     }
 
     //клеточки
-    for (int i = 30; i < width;)
+    for (int i = 20; i < width;)
     {
         RectangleShape* myline1 = new RectangleShape(Vector2f(height, 1.f));
         myline1->rotate(90.f);
         myline1->setFillColor(Color(125, 125, 125, 150));
         myline1->move(i, 0);
         marks1.push_back(myline1);
-        i = i + 30;
+        i = i + 20;
     }
-    for (int j = 30; j < height;)
+    for (int j = 20; j < height;)
     {
         RectangleShape* myline2 = new RectangleShape(Vector2f(width, 1.f));
         myline2->setFillColor(Color(125, 125, 125, 150));
         myline2->move(0, j);
         marks2.push_back(myline2);
-        j = j + 30;
+        j = j + 20;
     }
 
     // main loop
