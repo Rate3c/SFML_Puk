@@ -125,9 +125,6 @@ void DrawNewLine(Color color1, int i, RenderWindow &window1) {
     window1.draw(myline);
 }
 
-
-
-
 //отображение информации по смещению и длине последнего стежка на экране
 void DrawText(unsigned int shirina, RenderWindow &window1) {
     Vector2i position = Mouse::getPosition(window1);
@@ -275,7 +272,6 @@ int main()
         j = j + 30;
     }
 
-
     // main loop
     while (window.isOpen())
     {
@@ -402,7 +398,6 @@ int main()
     }
     return 0;
 }
-
 
 //обработка смещения рисунка
 void keyPressed(const sf::Event& event)
