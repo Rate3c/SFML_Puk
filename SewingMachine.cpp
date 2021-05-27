@@ -196,9 +196,6 @@ int main()
     int firsttap = 0; //counter of taps
     RenderWindow window(VideoMode(1600, 900), "SFML2.0");
     window.setFramerateLimit(10);
-    sf::Vector2u size = window.getSize();
-    unsigned int width = size.x;
-    unsigned int height = size.y;
 
     linescolor = LineColor(linescolor);
     int stezhokL = 200; //максимальная длина стежка
@@ -253,28 +250,16 @@ int main()
         choice = 0;
     }
 
-    //клеточки
-    for (int i = 20; i < width;)
-    {
-        RectangleShape* myline1 = new RectangleShape(Vector2f(height, 1.f));
-        myline1->rotate(90.f);
-        myline1->setFillColor(Color(125, 125, 125, 150));
-        myline1->move(i, 0);
-        marks1.push_back(myline1);
-        i = i + 20;
-    }
-    for (int j = 20; j < height;)
-    {
-        RectangleShape* myline2 = new RectangleShape(Vector2f(width, 1.f));
-        myline2->setFillColor(Color(125, 125, 125, 150));
-        myline2->move(0, j);
-        marks2.push_back(myline2);
-        j = j + 20;
-    }
+  
 
     // main loop
     while (window.isOpen())
     {
+
+        sf::Vector2u size = window.getSize();
+        unsigned int width = size.x;
+        unsigned int height = size.y;
+
         sf::Event event;
         while (window.pollEvent(event))
         {
@@ -335,6 +320,25 @@ int main()
                 Vector2f windowSize = Vector2f(event.size.width, event.size.height);
                 window.setView(View(Vector2f(windowSize.x / 2.f, windowSize.y / 2.f), Vector2f(windowSize)));
             }
+        }
+
+        //клеточки
+        for (int i = 20; i < width;)
+        {
+            RectangleShape* myline1 = new RectangleShape(Vector2f(height, 1.f));
+            myline1->rotate(90.f);
+            myline1->setFillColor(Color(125, 125, 125, 150));
+            myline1->move(i, 0);
+            marks1.push_back(myline1);
+            i = i + 20;
+        }
+        for (int j = 20; j < height;)
+        {
+            RectangleShape* myline2 = new RectangleShape(Vector2f(width, 1.f));
+            myline2->setFillColor(Color(125, 125, 125, 150));
+            myline2->move(0, j);
+            marks2.push_back(myline2);
+            j = j + 20;
         }
 
         //backspace чтобы удалить линию
