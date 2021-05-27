@@ -11,6 +11,13 @@ BackSpace - delete previous stitch
 Esc - exit
 LeftMouseClick - new stitch
 LAlt - drawwing assistant
+Left Arrow - move to left
+Right Arrow - move to right
+Up Arrow - move to up
+Down Arrow - move to down
+_________________________________________________________
+cords.txt - Файл с полученными коорлинатами 
+config.txt - Файл-конфиг
 */
 
 #pragma execution_character_set("utf-8")
@@ -26,8 +33,6 @@ LAlt - drawwing assistant
 using namespace sf;
 using namespace std;
 
-vector<sf::Shape*> lines;
-vector<sf::Shape*> stezhok;
 vector<double> Xcords; //вектор х координат
 vector<double> Ycords; //вектор у координат
 vector<double> Lenghts = { 0 }; //длины стежков
@@ -57,7 +62,7 @@ bool Is_empty(std::ifstream& pFile) {
     return pFile.peek() == std::ifstream::traits_type::eof();
 }
 
-//выход из программы
+//exit
 void Exit(vector <double>& Xcords, vector <double>& Ycords, RenderWindow &window1) {
     cout << endl;
     for (int i = 0; i < Xcords.size(); i++)
@@ -96,14 +101,32 @@ CircleShape StezhokLenght(int x, int y, double lengh, RenderWindow &window1) {
     return stezh;
 }
 
-// нарисовать линию(стежок)
+// draw line(stitch)
 void DrawLine(int x, int y, double lengh, double ugol, Color color1) {
     RectangleShape* myline = new RectangleShape(Vector2f(lengh, 2.f));
     myline->rotate(ugol);
     myline->setFillColor(color1);
     myline->move(x, y);
-    lines.push_back(myline);
 }
+
+void DrawNewLine(Color color1, int i, RenderWindow &window1) {
+    double alpha;
+    double lenght = sqrt(pow(Xcords[i] - Xcords[i - 1], 2) + pow(Ycords[i] - Ycords[i - 1], 2)); // длина линии
+    if (Xcords[i] - Xcords[i - 1] < 0) {
+        alpha = atan((Ycords[i] - Ycords[i - 1]) / (Xcords[i] - Xcords[i - 1])) * 180.0 / 3.141592;
+    }
+    else {
+        alpha = 180 + atan((Ycords[i] - Ycords[i - 1]) / (Xcords[i] - Xcords[i - 1])) * 180.0 / 3.141592;
+    }
+    RectangleShape myline(Vector2f(lenght, 2.f));
+    myline.rotate(alpha);
+    myline.setFillColor(color1);
+    myline.move(Xcords[i], Ycords[i]);
+    window1.draw(myline);
+}
+
+
+
 
 //отображение информации по смещению и длине последнего стежка на экране
 void DrawText(unsigned int shirina, RenderWindow &window1) {
@@ -122,7 +145,7 @@ void DrawText(unsigned int shirina, RenderWindow &window1) {
     font.loadFromFile("ebrima.ttf");
     dxdy.setFont(font);
     dxdy.setString("OFFSET BY dx = " + offsetDX.str() + "\n" + "OFFSET by dy = " + offsetDY.str() + "\n" + "Last stitch's lenght = " + laststitch.str());
-    dxdy.setCharacterSize(17);
+    dxdy.setCharacterSize(20);
     dxdy.setFillColor(sf::Color::Black);
     dxdy.setStyle(sf::Text::Bold);
     dxdy.move(shirina - 300, 0);
@@ -130,11 +153,10 @@ void DrawText(unsigned int shirina, RenderWindow &window1) {
 }
 
 //delete previous line
-void DeletePrevious(RenderWindow &window1, vector<double>& Xcords1, vector<double>& Ycords1, vector<double>& Lenghts1, vector<sf::Shape*>& stezhok1, vector<sf::Shape*>& lines) {
-    //stezhok1.erase(stezhok1.end() - 1);
-    lines.erase(lines.end() - 1);
+void DeletePrevious(RenderWindow &window1, vector<double>& Xcords1, vector<double>& Ycords1, vector<double>& Lenghts1) {
     Xcords1.erase(Xcords1.end() - 1);
     Ycords1.erase(Ycords1.end() - 1);
+    if(Lenghts1.size()>1)
     Lenghts1.erase(Lenghts1.end() - 1);
 }
 
@@ -166,15 +188,15 @@ Color LineColor(Color color1) {
     return color1;
 }
 
+void keyPressed(const sf::Event& event);
+
 int main()
 {
     setlocale(LC_ALL, "");
     Color linescolor;
     bool assistFlag = false;
     double alpha;
-    int stezhokL = 200;
-    int firsttap = 0;
-    double degree = 180.0 / 3.141592;
+    int firsttap = 0; //counter of taps
     RenderWindow window(VideoMode(1600, 900), "SFML2.0");
     window.setFramerateLimit(10);
     sf::Vector2u size = window.getSize();
@@ -182,7 +204,7 @@ int main()
     unsigned int height = size.y;
 
     linescolor = LineColor(linescolor);
-
+    int stezhokL = 200; //максимальная длина стежка
     int choice;
     cout << "   Would you like to use your config(1) or draw new(2)? ";
     cin >> choice;
@@ -214,21 +236,17 @@ int main()
 
                 for (firsttap; firsttap < Xcords.size(); firsttap++) {
 
-                    StezhokLenght(Xcords[firsttap], Ycords[firsttap], stezhokL, window);
-
                     if (firsttap != 0) {
                         double lenght = sqrt(pow(Xcords[firsttap] - Xcords[firsttap - 1], 2) + pow(Ycords[firsttap] - Ycords[firsttap - 1], 2));
 
                         if (Xcords[firsttap] - Xcords[firsttap - 1] < 0) {
-                            alpha = atan((Ycords[firsttap] - Ycords[firsttap - 1]) / (Xcords[firsttap] - Xcords[firsttap - 1])) * degree;
+                            alpha = atan((Ycords[firsttap] - Ycords[firsttap - 1]) / (Xcords[firsttap] - Xcords[firsttap - 1])) * 180.0 / 3.141592;
                         }
                         else {
-                            alpha = 180 + atan((Ycords[firsttap] - Ycords[firsttap - 1]) / (Xcords[firsttap] - Xcords[firsttap - 1])) * degree;
+                            alpha = 180 + atan((Ycords[firsttap] - Ycords[firsttap - 1]) / (Xcords[firsttap] - Xcords[firsttap - 1])) * 180.0 / 3.141592;
                         }
 
                         Lenghts.push_back(lenght);
-
-                        DrawLine(Xcords[firsttap], Ycords[firsttap], lenght, alpha, linescolor);
                     }
                 }
             }
@@ -238,6 +256,7 @@ int main()
         choice = 0;
     }
 
+    //клеточки
     for (int i = 30; i < width;)
     {
         RectangleShape* myline1 = new RectangleShape(Vector2f(height, 1.f));
@@ -257,7 +276,7 @@ int main()
     }
 
 
-    // главный цикл
+    // main loop
     while (window.isOpen())
     {
         sf::Event event;
@@ -265,8 +284,7 @@ int main()
         {
             switch (event.type)
             {
-            case sf::Event::Closed:
-            {
+            case sf::Event::Closed: {
                 Exit(Xcords, Ycords, window);
                 return 0;
             }
@@ -291,18 +309,16 @@ int main()
                     // вычисление угла поворота линии 
                     if (lenght <= stezhokL) {
 
-                        StezhokLenght(event.mouseButton.x, event.mouseButton.y, stezhokL, window); // окружность для наглядности
-
                         Lenghts.push_back(lenght);
 
                         if (Xcords[firsttap - 1] - Xcords[firsttap - 2] < 0) {
-                            alpha = atan((Ycords[firsttap - 1] - Ycords[firsttap - 2]) / (Xcords[firsttap - 1] - Xcords[firsttap - 2])) * degree;
+                            alpha = atan((Ycords[firsttap - 1] - Ycords[firsttap - 2]) / (Xcords[firsttap - 1] - Xcords[firsttap - 2])) * 180.0 / 3.141592;
                         }
                         else {
-                            alpha = 180 + atan((Ycords[firsttap - 1] - Ycords[firsttap - 2]) / (Xcords[firsttap - 1] - Xcords[firsttap - 2])) * degree;
+                            alpha = 180 + atan((Ycords[firsttap - 1] - Ycords[firsttap - 2]) / (Xcords[firsttap - 1] - Xcords[firsttap - 2])) * 180.0 / 3.141592;
                         }
 
-                        DrawLine(event.mouseButton.x, event.mouseButton.y, lenght, alpha, linescolor);
+                        //DrawLine(event.mouseButton.x, event.mouseButton.y, lenght, alpha, linescolor);
                     }
                     else {
                         cout << "   Wrong stitch lenght!" << endl;
@@ -311,13 +327,23 @@ int main()
                         firsttap--;
                     }
                 }
+
             }
+            case sf::Event::KeyPressed: //нажата клавиша клавиатуры
+                keyPressed(event);
+                break;
+            }
+            //чтобы при резайзе окна не сжимался рисунок
+            if (event.type == Event::Resized)
+            {
+                Vector2f windowSize = Vector2f(event.size.width, event.size.height);
+                window.setView(View(Vector2f(windowSize.x / 2.f, windowSize.y / 2.f), Vector2f(windowSize)));
             }
         }
 
         //backspace чтобы удалить линию
-        if ((sf::Keyboard::isKeyPressed(sf::Keyboard::BackSpace)) && (lines.size() > 0)) {
-            DeletePrevious(window, Xcords, Ycords, Lenghts, stezhok, lines);
+        if ((sf::Keyboard::isKeyPressed(sf::Keyboard::BackSpace)) && (Xcords.size() > 0)) {
+            DeletePrevious(window, Xcords, Ycords, Lenghts);
             firsttap--;
         }
 
@@ -336,6 +362,7 @@ int main()
             window.draw(StezhokLenght(Xcords[firsttap - 1], Ycords[firsttap - 1], stezhokL, window));
         }
 
+        //два цикла для отрисовки сетки
         for (auto it3 = marks1.begin(); it3 != marks1.end(); it3++)
         {
             window.draw(**it3);
@@ -345,23 +372,25 @@ int main()
             window.draw(**it4);
         }
 
-        for (auto it = lines.begin(); it != lines.end(); it++)
+        for (int i = 1; i < Xcords.size(); i++)
         {
-            window.draw(**it);
+            DrawNewLine(linescolor, i, window);
         }
 
+        //отображение текста
         if (Xcords.size() > 0) {
             DrawText(width, window);
         }
 
         window.display();
 
+        // вывод координат в файл
         fstream cords;
         cords.open("cords.txt", ios::out);
         cords << "Координаты узлов: " << endl;
         for (int  i = 0; i < Xcords.size();  i++)
         {
-            cords << i+1 << " - (" << Xcords[i] << "; " << Ycords[i] << ") "; // вывод координат в файл
+            cords << i+1 << " - (" << Xcords[i] << "; " << Ycords[i] << ") ";
             cords << "Длина " << i << " стежка = " << (int)Lenghts[i] <<"mm" << endl;
         }
         cords.close(); 
@@ -372,4 +401,38 @@ int main()
         }
     }
     return 0;
+}
+
+
+//обработка смещения рисунка
+void keyPressed(const sf::Event& event)
+//обработка нажатия клавиш
+{
+    switch (event.key.code)  //анализ нажатой клавиши
+    {
+    case sf::Keyboard::Left:  //если нажата клавиша влево
+        for (int i = 0; i <= Xcords.size()-1; i++)
+        {
+            Xcords[i] -= 30;
+        }
+        break;
+    case sf::Keyboard::Right: //если нажата клавиша вправо
+        for (int i = 0; i <= Xcords.size() - 1; i++)
+        {
+            Xcords[i] += 30;
+        }
+            break;
+    case sf::Keyboard::Up:  //если нажата клавиша вверх
+        for (int i = 0; i <= Xcords.size() - 1; i++)
+        {
+            Ycords[i] -= 30;
+        }
+        break;
+    case sf::Keyboard::Down: //если нажата клавиша вниз
+        for (int i = 0; i <= Xcords.size() - 1; i++)
+        {
+            Ycords[i] += 30;
+        }
+        break;
+    }
 }
