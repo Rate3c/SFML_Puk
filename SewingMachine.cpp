@@ -6,6 +6,14 @@
 фиксиру€ координату (0,0) начала рисунка в декартовой системе координат. ƒл€ задани€ очередного стежка курсор перемещаетс€ в другую точку, но не дальше,
 чем на максимальную длину стежка, и т. д., образу€ узор вышивки. ќкончание ввода рисунка производитс€ по нажатию клавиши ЂEscї.
 _________________________________________________________
+* The work was carried out by student group 0301 Nesterov Evgeny
+* THE TASK:
+Write a program - a graphic editor that allows you to automate the process of creating embroidery, first on the computer screen,
+and then transferring the data as a sequence of stitch coordinates to the automatic sewing machine as a control program.
+Using the cursor, the user selects the desired point on the screen and presses the left mouse button,
+fixing the coordinate (0,0) of the beginning of the drawing in the Cartesian coordinate system. To specify the next stitch, the cursor moves to another point, but not further,
+than the maximum stitch length, etc., to form an embroidery pattern. The end of entering a picture is made by pressing the "Esc" key.
+_________________________________________________________
 
 BackSpace - delete previous stitch
 Esc - exit
@@ -16,8 +24,7 @@ Right Arrow - move to right
 Up Arrow - move to up
 Down Arrow - move to down
 _________________________________________________________
-cords.txt - ‘айл с полученными коорлинатами
-config.txt - ‘айл-конфиг
+config.txt - config file
 */
 
 #pragma execution_character_set("utf-8")
@@ -33,11 +40,11 @@ config.txt - ‘айл-конфиг
 using namespace sf;
 using namespace std;
 
-vector<double> Xcords; //вектор х координат
-vector<double> Ycords; //вектор у координат
-vector<double> Lenghts = { 0 }; //длины стежков
+vector<double> Xcords; //vector x coordinates
+vector<double> Ycords; //vector y coordinates
+vector<double> Lenghts = { 0 }; //lenght of the stitches
 
-//дл€ рисовани€ сетки
+//fot grid drawing
 void Grid(RenderWindow& window1) {
 
 	sf::Vector2u size = window1.getSize(); //размер окна
@@ -62,7 +69,7 @@ void Grid(RenderWindow& window1) {
 
 }
 
-//проверка, не пустой ли файл(конфиг)
+//checking if the file is empty (config)
 bool Is_empty(std::ifstream& pFile) {
 	return pFile.peek() == std::ifstream::traits_type::eof();
 }
@@ -95,10 +102,9 @@ int Exit(vector <double>& Xcords, vector <double>& Ycords, RenderWindow& window1
 	cout << endl << "Program complete." << endl; return 0;
 }
 
-//окружность дл€ нагдл€лной длины стежка
+//circle for per stitch length
 CircleShape StezhokLenght(int x, int y, RenderWindow& window1, int stezhok) {
 	CircleShape stezh(stezhok);
-	//stezh.setFillColor(Color::White);
 	stezh.setOutlineThickness(1);
 	stezh.setOutlineColor(sf::Color(0, 0, 0, 45));
 	stezh.move(x - stezhok, y - stezhok);
@@ -123,7 +129,7 @@ void DrawNewLine(Color color1, int i, RenderWindow& window1) {
 	window1.draw(myline);
 }
 
-//отображение информации по смещению и длине последнего стежка на экране
+//display of information on offset and length of the last stitch on the screen
 void DrawText(RenderWindow& window1) {
 	sf::Vector2u size = window1.getSize(); //размер окна
 
@@ -189,7 +195,7 @@ Color LineColor(Color color1) {
 
 void Shift(const sf::Event& event, RenderWindow& window1);
 
-//подн€тие и опускание флага при нажатии LAlt
+//raising and lowering the flag when pressing LAlt
 bool Assistance(bool assistFlag1) {
 
 	if (assistFlag1 == false) {
@@ -225,9 +231,12 @@ int main()
 
 	sf::Vector2u windowsize = window.getSize(); //size of rendered window
 
+	//enter the lenght of the stitch
 	cout << "   Enter lenght of the stitch: ";
 	cin >> stezhokL; cout << endl;
 	linescolor = LineColor(linescolor);
+
+	//reading config
 	int choice;
 	cout << "   Would you like to use your config(1) or draw new(2)? ";
 	cin >> choice;
@@ -295,7 +304,7 @@ int main()
 		{
 			switch (event.type)
 			{
-			case (sf::Event::KeyPressed): { //нажата клавиша клавиатуры
+			case (sf::Event::KeyPressed): { //keyboard key pressed
 				//shifting
 				Shift(event, window);
 				break;
@@ -303,27 +312,27 @@ int main()
 			default:
 				break;
 			}
-			//если нажали крестик, программа завершитс€
+			//if you pressed the cross, the program will end
 			if (event.type == sf::Event::Closed) {
 				Exit(Xcords, Ycords, window);
 				return 0;
 			}
-			//регистраци€ нажати€
+			//click registration
 			if (event.type == sf::Event::MouseButtonPressed) {
-				// считывание первой точки без рисовани€ 
+				// reading the first point without drawing 
 				if (firsttap == 0) {
 					Vector2i position = Mouse::getPosition(window);
 					Xcords.push_back(position.x);
 					Ycords.push_back(position.y);
 					firsttap++;
 				}
-				// отрисовка линий 
+				// lines drawing
 				else {
 					Xcords.push_back(event.mouseButton.x);
 					Ycords.push_back(event.mouseButton.y);
 					firsttap++;
-					double lenght = sqrt(pow(Xcords[firsttap - 1] - Xcords[firsttap - 2], 2) + pow(Ycords[firsttap - 1] - Ycords[firsttap - 2], 2)); // длина линии
-					// вычисление угла поворота линии 
+					double lenght = sqrt(pow(Xcords[firsttap - 1] - Xcords[firsttap - 2], 2) + pow(Ycords[firsttap - 1] - Ycords[firsttap - 2], 2)); // lenght of the line
+					// calculating the angle of rotation of the line 
 					if (lenght <= stezhokL) {
 
 						Lenghts.push_back(lenght);
@@ -345,7 +354,7 @@ int main()
 
 			}
 
-			//чтобы при резайзе окна не сжималс€ рисунок
+			//so that when the window is resized, the picture does not shrink
 			if (event.type == Event::Resized)
 			{
 				Vector2f windowSize = Vector2f(event.size.width, event.size.height);
@@ -369,7 +378,7 @@ int main()
 					Exit(Xcords, Ycords, window);
 				}
 
-				//включение и выключение флага дл€ вспомогательной окружности
+				//toggle the flag on and off for the assistance circle
 				if (event.key.code == sf::Keyboard::LAlt)
 				{
 					assistFlag = Assistance(assistFlag);
@@ -378,7 +387,7 @@ int main()
 
 			window.clear(Color(240, 240, 240, 255));
 
-			//вспомогательна€ окружность включаетс€, когда подн€т флаг(нажата клавиша LAlt)
+			//the construction circle turns on when the flag is raised (the LAlt key is pressed)
 			if ((firsttap > 0) && (assistFlag == true)) {
 				window.draw(StezhokLenght(Xcords[firsttap - 1], Ycords[firsttap - 1], window, stezhokL));
 			}
@@ -390,7 +399,7 @@ int main()
 				DrawNewLine(linescolor, i, window);
 			}
 
-			//отображение текста
+			//display text
 			if (Xcords.size() > 0) {
 				DrawText(window);
 			}
@@ -401,29 +410,29 @@ int main()
 	return 0;
 }
 
-//обработка нажати€ клавиш
+//key handling
 void Shift(const sf::Event& event, RenderWindow& window1) {
-	switch (event.key.code)  //анализ нажатой клавиши
+	switch (event.key.code)  //analysis of the pressed key
 	{
-	case sf::Keyboard::Left:  //если нажата клавиша влево
+	case sf::Keyboard::Left:  //if the left key is pressed
 		for (int i = 0; i <= Xcords.size() - 1; i++)
 		{
 			Xcords[i] -= 30;
 		}
 		break;
-	case sf::Keyboard::Right: //если нажата клавиша вправо
+	case sf::Keyboard::Right: //if the right key is pressed
 		for (int i = 0; i <= Xcords.size() - 1; i++)
 		{
 			Xcords[i] += 30;
 		}
 		break;
-	case sf::Keyboard::Up:  //если нажата клавиша вверх
+	case sf::Keyboard::Up:  //if the up key is pressed
 		for (int i = 0; i <= Xcords.size() - 1; i++)
 		{
 			Ycords[i] -= 30;
 		}
 		break;
-	case sf::Keyboard::Down: //если нажата клавиша вниз
+	case sf::Keyboard::Down: //if the down key is pressed
 		for (int i = 0; i <= Xcords.size() - 1; i++)
 		{
 			Ycords[i] += 30;
@@ -433,6 +442,7 @@ void Shift(const sf::Event& event, RenderWindow& window1) {
 	}
 }
 
+//exit function
 void Exit(const sf::Event& event, RenderWindow& window1) {
 	switch (event.key.code) {
 	case sf::Keyboard::Escape: {
