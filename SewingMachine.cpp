@@ -44,6 +44,8 @@ vector<double> Xcords; //vector x coordinates
 vector<double> Ycords; //vector y coordinates
 vector<double> Lenghts = { 0 }; //lenght of the stitches
 
+
+
 //fot grid drawing
 void Grid(RenderWindow& window1) {
 
@@ -207,6 +209,7 @@ bool Assistance(bool assistFlag1) {
 	return assistFlag1;
 }
 
+//auto centering if picture is out of window
 void AutoCentering(vector <double> &cords1, vector <double>& cords2, unsigned int side1, unsigned int side2) {
 
 	double shiftY = side1 / 2 - cords1[cords1.size() - 1];
@@ -218,6 +221,15 @@ void AutoCentering(vector <double> &cords1, vector <double>& cords2, unsigned in
 		}
 }
 
+//scaling
+void Scaling(vector <double> &x, vector <double> &y, double scalee) {
+	for (int  i = 0; i < x.size(); i++)
+	{
+		x[i] = (int)(x[i] * scalee);
+		y[i] = (int)(y[i] * scalee);
+	}
+}
+
 int main()
 {
 	setlocale(LC_ALL, "");
@@ -226,6 +238,7 @@ int main()
 	double alpha;
 	int stezhokL;
 	int firsttap = 0; //counter of taps
+	double scale = 1; // current scale
 	RenderWindow window(VideoMode(1600, 900), "SFML2.0");
 	window.setFramerateLimit(10);
 
@@ -289,12 +302,11 @@ int main()
 
 		if (Xcords.size() > 0) {
 
-			if ((abs(Xcords[Xcords.size() - 1] - windowsize.x / 2) >= windowsize.x / 2) || (abs(Ycords[Ycords.size() - 1] - windowsize.y / 2) >= windowsize.y / 2)) {
+			if ((abs(Xcords[Xcords.size() - 1] - windowsize.x / 2) >= windowsize.x / 2 - 90) || (abs(Ycords[Ycords.size() - 1] - windowsize.y / 2) >= windowsize.y / 2) - 90) {
 				AutoCentering(Ycords, Xcords, windowsize.y, windowsize.x);
 			}
 		}
 	}
-
 
 	// main loop
 	while (window.isOpen())
@@ -361,8 +373,26 @@ int main()
 				window.setView(View(Vector2f(windowSize.x / 2.f, windowSize.y / 2.f), Vector2f(windowSize)));
 			}
 
-			if (event.type == sf::Event::KeyPressed)
+			if (event.type == sf::Event::KeyReleased)
 			{
+				//scaling if "+" has been pressed
+				if (event.key.code == sf::Keyboard::Add)
+				{
+					stezhokL = stezhokL + stezhokL * 0.1;
+					scale = 1 + scale * 0.1;
+					Scaling(Xcords, Ycords, scale);
+					AutoCentering(Ycords, Xcords, windowsize.y, windowsize.x);
+				}
+
+				//scaling if "-" has been pressed
+				if (event.key.code == sf::Keyboard::Subtract)
+				{
+					stezhokL = stezhokL - stezhokL * 0.1;
+					scale = 1 - scale * 0.1;
+					Scaling(Xcords, Ycords, scale);
+					AutoCentering(Ycords, Xcords, windowsize.y, windowsize.x);
+				}
+
 				//delete previous stitch
 				if (event.key.code == sf::Keyboard::BackSpace)
 				{
