@@ -109,7 +109,7 @@ int Exit(vector <double>& DX, vector <double>& DY, RenderWindow& window1, double
 }
 
 //circle for per stitch length
-void StezhokLength(vector <double>& DX1, vector <double>& DY1, RenderWindow& window1, int stezhok) {
+void StezhokLength(vector <double>& DX1, vector <double>& DY1, RenderWindow& window1, double stezhok) {
 	double x = DX1[0];
 	double y = DY1[0];
 	for (int i = 1; i < DX1.size(); i++)
@@ -123,16 +123,6 @@ void StezhokLength(vector <double>& DX1, vector <double>& DY1, RenderWindow& win
 	stezh.setOutlineColor(sf::Color(0, 0, 0, 45));
 	stezh.move(x - stezhok, y - stezhok);
 	window1.draw(stezh);
-
-	Vector2i position = Mouse::getPosition(window1);
-	if (sqrt(pow(position.x - x, 2) + pow(position.y - y, 2)) <= stezhok) {
-		sf::VertexArray assistanceline(sf::LineStrip, 2);
-		assistanceline[0].position = sf::Vector2f(x, y);
-		assistanceline[1].position = sf::Vector2f(position.x, position.y);
-		assistanceline[0].color = Color(75, 0, 130);
-		assistanceline[1].color = Color(75, 0, 130);
-		window1.draw(assistanceline);
-	}
 }
 
 // draw line(stitch)
@@ -159,8 +149,8 @@ void DrawNewLine(Color color1, int i, RenderWindow& window1) {
 	window1.draw(myline);
 }
 
-//display of information on offset and length of the last stitch on the screen
-void DrawText(RenderWindow& window1, double curscale) {
+//display of information on offset and length of the last stitch on the screen and drawing assistance line
+void DrawText(RenderWindow& window1, double curscale, double stezhok) {
 	sf::Vector2u size = window1.getSize(); //размер окна
 
 	Vector2i position = Mouse::getPosition(window1);
@@ -182,6 +172,16 @@ void DrawText(RenderWindow& window1, double curscale) {
 	offsetDY << abs(position.y - y);
 	lengthfrom << (int)length;
 	scale << curscale;
+
+	//assistance line
+	if (sqrt(pow(position.x - x, 2) + pow(position.y - y, 2)) <= stezhok) {
+		sf::VertexArray assistanceline(sf::LineStrip, 2);
+		assistanceline[0].position = sf::Vector2f(x, y);
+		assistanceline[1].position = sf::Vector2f(position.x, position.y);
+		assistanceline[0].color = Color(75, 0, 130);
+		assistanceline[1].color = Color(75, 0, 130);
+		window1.draw(assistanceline);
+	}
 
 	sf::Text dxdy;
 	sf::Font font;
@@ -275,7 +275,8 @@ bool Assistance(bool assistFlag1) {
 }
 
 //auto centering if picture is out of window
-void AutoCentering(vector <double>& DY1, vector <double>& DX1, unsigned int side1, unsigned int side2) {
+void AutoCentering(RenderWindow &window1, vector <double>& DY1, vector <double>& DX1, unsigned int side1, unsigned int side2) {
+	sf::Vector2u windowsize = window1.getSize();
 	double x = DX1[0];
 	double y = DY1[0];
 	for (int i = 1; i < DX1.size(); i++)
@@ -283,6 +284,7 @@ void AutoCentering(vector <double>& DY1, vector <double>& DX1, unsigned int side
 		x += DX1[i];
 		y += DY1[i];
 	}
+
 	double shiftY = side1 / 2 - y;
 	double shiftX = side2 / 2 - x;
 	DY1[0] = DY1[0] + shiftY;
@@ -290,25 +292,43 @@ void AutoCentering(vector <double>& DY1, vector <double>& DX1, unsigned int side
 }
 
 //scaling
-void Scaling(vector <double>& x, vector <double>& y, double scalee, int j, int& stezh) {
+void Scaling(vector <double>& x, vector <double>& y, double scalee, int j, double& stezh) {
+	double X = x[0];
+	double Y = y[0];
+	for (int i = 1; i < x.size(); i++)
+	{
+		X += x[i];
+		Y += y[i];
+	}
+	double dxbefore = x[0] - X;
+	double dybefore = y[0] - Y;
 	if (j == 1) {
-		stezh *= 1.2;
+		stezh *= 1.1;
 		for (int i = 1; i < x.size(); i++)
 		{
-			x[i] = (int)(x[i] * 1.1);
-			y[i] = (int)(y[i] * 1.1);
+			x[i] = (x[i] * 1.1);
+			y[i] = (y[i] * 1.1);
 		}
 	}
-	else if (j == 2){
-		stezh /= 1.2;
+	else if (j == 2) {
+		stezh /= 1.1;
 		for (int i = 1; i < x.size(); i++)
 		{
-			x[i] = (int)(x[i] / 1.1);
-			y[i] = (int)(y[i] / 1.1);
+			x[i] = (x[i] / 1.1);
+			y[i] = (y[i] / 1.1);
 		}
 	}
-
-	
+	double X2 = x[0];
+	double Y2 = y[0];
+	for (int i = 1; i < x.size(); i++)
+	{
+		X2 += x[i];
+		Y2 += y[i];
+	}
+	double dxafter = x[0] - X2;
+	double dyafter = y[0] - Y2;
+	x[0] -= dxbefore - dxafter;
+	y[0] -= dybefore - dyafter;
 }
 
 int main()
@@ -316,7 +336,7 @@ int main()
 	Color windowcolor; //color of the window
 	Color linescolor; //color of the lines
 	bool assistFlag = false; //flag
-	int stezhokL;
+	double stezhokL;
 	int firsttap = 0; //counter of taps
 	double scale = 1; // current scale
 	double currscale = scale;
@@ -369,10 +389,7 @@ int main()
 		choice = 0;
 
 		if (DX.size() > 0) {
-
-			if ((abs(DX[DX.size() - 1] - windowsize.x / 2) >= windowsize.x / 2 - 100) || (abs(DY[DY.size() - 1] - windowsize.y / 2) >= windowsize.y / 2) - 100) {
-				AutoCentering(DY, DX, windowsize.y, windowsize.x);
-			}
+			AutoCentering(window, DY, DX, windowsize.y, windowsize.x);
 		}
 	}
 
@@ -440,22 +457,22 @@ int main()
 				//scaling if "+" has been pressed
 				if (event.key.code == sf::Keyboard::Add)
 				{
-					if (currscale < 2.4) {
+					double maximum = 2.4;
+					if (currscale < maximum) {
 						int j = 1;
 						currscale += 0.1;
 						Scaling(DX, DY, currscale, j, stezhokL);
-						AutoCentering(DY, DX, windowsize.y, windowsize.x);
 					}
 				}
 
 				//scaling if "-" has been pressed
 				if (event.key.code == sf::Keyboard::Subtract)
 				{
-					if (currscale > 0.5) {
+					double minimum = 0.5;
+					if (currscale > minimum) {
 						int j = 2;
 						currscale -= 0.1;
 						Scaling(DX, DY, scale, j, stezhokL);
-						AutoCentering(DY, DX, windowsize.y, windowsize.x);
 					}
 				}
 
@@ -497,7 +514,7 @@ int main()
 
 			//display text
 			if (DX.size() > 0) {
-				DrawText(window, currscale);
+				DrawText(window, currscale, stezhokL);
 			}
 			window.display();
 		}
